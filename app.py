@@ -16,8 +16,8 @@ nltk.download("punkt")
 nltk.download("stopwords")
 nltk.download("wordnet")
 
+st.set_page_config(page_title="NeuroSentiment",page_icon="🧠")
 
-# Load models and tokenizer with caching
 @st.cache_resource
 def load_models():
     # Load the trained models
@@ -77,21 +77,68 @@ sample_reviews = {
 
 
 # Streamlit UI
-st.title("Review Sentiment Analysis")
+st.title("NeuroSentiment - Review Sentiment Analysis")
 
 selected_models = st.multiselect("Select models to use:", ["RNN", "LSTM", "BiLSTM"])
 
+# Custom CSS injected once
+st.markdown(
+    """
+    <style>
+    .stButton > button {
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        height: 3em;
+        width: 100%;
+    }
+    .positive-button > button {
+        background-color: #28a745;
+    }
+    .positive-button > button:hover {
+        background-color: #218838;
+    }
+    .negative-button > button {
+        background-color: #dc3545;
+    }
+    .negative-button > button:hover {
+        background-color: #c82333;
+    }
+    .neutral-button > button {
+        background-color: #007bff;
+    }
+    .neutral-button > button:hover {
+        background-color: #0069d9;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+# --- Centered Buttons with Per-Button Style ---
 st.write("### Try a Sample Review")
-col1, col2, col3 = st.columns(3)
+spacer1, col1, col2, col3, spacer2 = st.columns([1, 2, 2, 2, 1])
+
 with col1:
-    if st.button("Positive", key="positive_sample"):
-        st.session_state.review_text = random.choice(sample_reviews["positive"])
+    with st.container():
+        st.markdown('<div class="stButton positive-button">', unsafe_allow_html=True)
+        if st.button("Positive", key="positive_sample"):
+            st.session_state.review_text = random.choice(sample_reviews["positive"])
+        st.markdown("</div>", unsafe_allow_html=True)
+
 with col2:
-    if st.button("Negative", key="negative_sample"):
-        st.session_state.review_text = random.choice(sample_reviews["negative"])
+    with st.container():
+        st.markdown('<div class="stButton negative-button">', unsafe_allow_html=True)
+        if st.button("Negative", key="negative_sample"):
+            st.session_state.review_text = random.choice(sample_reviews["negative"])
+        st.markdown("</div>", unsafe_allow_html=True)
+
 with col3:
-    if st.button("Neutral", key="neutral_sample"):
-        st.session_state.review_text = random.choice(sample_reviews["neutral"])
+    with st.container():
+        st.markdown('<div class="stButton neutral-button">', unsafe_allow_html=True)
+        if st.button("Neutral", key="neutral_sample"):
+            st.session_state.review_text = random.choice(sample_reviews["neutral"])
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # Initialize session state for review_text if it doesn't exist
 if "review_text" not in st.session_state:
@@ -130,7 +177,7 @@ if st.button("Predict"):
         cols = st.columns(len(selected_models))
         for i, (model_name, (sentiment, _)) in enumerate(predictions.items()):
             with cols[i]:
-                st.metric(label=model_name, value=sentiment)
+                st.metric(label=model_name, value=sentiment.capitalize())
 
         # Create DataFrame for detailed scores
         prediction_data = []
@@ -153,6 +200,8 @@ if st.button("Predict"):
         # Check for consensus
         sentiments = [pred[0] for pred in predictions.values()]
         if len(set(sentiments)) == 1:
-            st.success(f"All selected models agree on the sentiment: **{sentiments[0]}**.")
+            st.success(
+                f"All selected models agree on the sentiment: **{sentiments[0]}**."
+            )
         else:
             st.warning("There is disagreement among the selected models.")
